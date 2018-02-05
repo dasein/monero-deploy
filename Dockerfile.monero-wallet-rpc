@@ -1,0 +1,24 @@
+FROM ubuntu:16.04
+
+RUN apt-get update \
+    && apt-get install -y wget bzip2
+
+WORKDIR monero
+
+RUN wget --quiet https://downloads.getmonero.org/cli/linux64 \
+    && tar --strip-components=2 -xf /monero/linux64 \
+    && rm linux64
+
+RUN cp monero-wallet-rpc /usr/local/bin/
+
+VOLUME /wallet
+
+EXPOSE 8082
+
+ENTRYPOINT ["monero-wallet-rpc"]
+
+CMD ["--rpc-bind-ip", "127.0.0.1", \
+    "--rpc-bind-port", "8082", \
+    "--password-file", "/wallet/password", \
+    "--wallet-file", "/wallet/pool-wallet", \
+    "--daemon-host", "monerod:18081"]

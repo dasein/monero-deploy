@@ -1,0 +1,56 @@
+monerod:
+  build: .
+  dockerfile: Dockerfile.monerod
+  container_name: monerod
+  user: root
+  restart: always
+  volumes:
+    - ./.bitmonero:/monero/.bitmonero
+  tty: true
+  ports:
+    - 127.0.0.1:18081:18081
+
+monero-wallet-rpc:
+  build: .
+  dockerfile: Dockerfile.monero-wallet-rpc
+  container_name: monero-wallet-rpc
+  user: root
+  volumes:
+    - ./wallet:/wallet
+  tty: true
+  links:
+    - monerod
+
+redis:
+  image: "redis:alpine"
+  container_name: redis
+  restart: always
+  volumes:
+    - ./redis-data:/data
+
+pool:
+  build: .
+  dockerfile: Dockerfile.pool
+  container_name: pool
+  user: root
+  restart: always
+  working_dir: /pool
+  ports:
+    - 3333:3333
+    - 5555:5555
+    - 7777:7777
+    - 8888:8888
+    - 8117:8117
+  links:
+    - monerod
+    - redis
+    - monero-wallet-rpc
+
+nginx:
+  image: "nginx:mainline-alpine"
+  container_name: nginx-pool
+  restart: always
+  ports:
+    - 80:80
+  volumes:
+    - ./html:/usr/share/nginx/html:ro
